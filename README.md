@@ -7,7 +7,7 @@ This repository is a curated collection of coding quizzes from the [Bytes.dev](h
 ## About the Collection 🗂️
 
 ### What's Inside:
-- **Quizzes from each newsletter issue**: Arranged by issue number and date.
+- **Quizzes from each newsletter issue**: Arranged by issue number.
 - **Various coding challenges**: Includes JavaScript puzzles and debugging exercises.
 
 ## How to Use 🛠️
