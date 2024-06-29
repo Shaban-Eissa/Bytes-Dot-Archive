@@ -2184,3 +2184,41 @@ function reverseString(str) {
 let reversedString = reverseString("Hello, 👋!");
 console.log(reversedString);
 ```
+
+
+<br />
+<hr />
+
+#### Issue 301 - POP QUIZ
+
+Can you write a function that determines if one set is a subset of another set?
+```js
+const setA = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+const setB = new Set([2, 4, 6, 8, 10]);
+```
+
+#### POP QUIZ: ANSWER 
+At first glance, you might write something like this:
+```js
+const setA = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+const setB = new Set([2, 4, 6, 8, 10]);
+
+function isSubset(setA, setB) {
+  for (let elem of setB) {
+    if (!setA.has(elem)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+console.log(isSubset(setA, setB)); // Output: true
+```
+
+But recently, the Set object got upgraded with some new methods including a method called isSubsetOf which allows us to write something like this:
+```js
+const setA = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+const setB = new Set([2, 4, 6, 8, 10]);
+
+console.log(setB.isSubsetOf(setA)); // Output: true
+```
