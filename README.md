@@ -2222,3 +2222,53 @@ const setB = new Set([2, 4, 6, 8, 10]);
 
 console.log(setB.isSubsetOf(setA)); // Output: true
 ```
+
+
+<br />
+<hr />
+
+#### Issue 308 - Spot the Bug
+
+```js
+function eventuallyFail(time) {
+  setTimeout(() => {
+    throw Error("Oops!")
+  }, time)
+}
+
+try {
+  eventuallyFail(1000)
+} catch (error) {
+  console.error(error.message)
+}
+```
+
+#### Spot the Bug: Solution
+
+```js
+function eventuallyFail (time) {
+  setTimeout(() => {
+    throw Error("Oops!")
+  }, time)
+}
+
+try {
+  eventuallyFail(1000)
+} catch (error) {
+  console.error(error.message)
+}
+```
+try/catch is synchronous. By the time our error is thrown, the try/catch block will be long gone - leaving us with Uncaught Error: Oops!. To fix this, we want to rely on promises which allow us more async control.
+
+```js
+function eventuallyFail (time) {
+  return new Promise((res, rej) => {
+    setTimeout(() => {
+      rej(Error("Oops!"))
+    }, time)
+  })
+}
+
+eventuallyFail(1000)
+  .catch((reason) => console.error(reason.message))
+```
