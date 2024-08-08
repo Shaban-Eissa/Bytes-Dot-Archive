@@ -2272,3 +2272,32 @@ function eventuallyFail (time) {
 eventuallyFail(1000)
   .catch((reason) => console.error(reason.message))
 ```
+
+<br />
+<hr />
+
+#### Issue 311 - Pop Quiz
+
+```js
+async function completeCheckout(orderId) {
+  await updateAnalytics(orderId);
+  const order = await processOrder(orderId);
+
+  return order;
+}
+```
+
+#### Pop Quiz: Answer
+
+Because processOrder doesn’t depend on the result of updateAnalytics, you can parallelize the two invocations.
+
+```js
+async function completeCheckout(orderId) {
+  const [_, order] = await Promise.all([
+    updateAnalytics(orderId),
+    processOrder(orderId)
+  ])
+
+  return order;
+}
+```
