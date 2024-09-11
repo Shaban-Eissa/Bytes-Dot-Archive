@@ -2301,3 +2301,33 @@ async function completeCheckout(orderId) {
   return order;
 }
 ```
+
+
+
+<br />
+<hr />
+
+#### Issue 321 - Pop Quiz
+
+What gets logged?
+
+```js
+let i = 0
+
+function x() {
+  i++
+  return 10
+}
+
+i += x()
+
+console.log(i) // ?
+```
+
+#### Pop Quiz: Answer
+
+The answer is 10. Here’s how it works.
+
+For clarity, we can refactor i += x() to be i = i + x(). From there, the interpreter begins evaluating our code. Before it evaluates the function invocation, it seems that i evaluates to 0, so now our code is i = 0 + x(). The invocation of x returns 10, so now it’s i = 0 + 10, which gives us i = 10.
+
+Note that if you swap the order of i and x() like i = x() + i you get a different value.
