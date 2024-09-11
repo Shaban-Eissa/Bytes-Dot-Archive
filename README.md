@@ -2306,6 +2306,43 @@ async function completeCheckout(orderId) {
 <br />
 <hr />
 
+#### Issue 319 - Spot the Bug
+
+```js
+class User {
+  async constructor(userId) {
+    const user = await getUser(userId)
+    this.id = user.id;
+    this.name = user.name;
+    this.email = user.email;
+  }
+  ...
+}
+```
+
+#### Pop Quiz: Answer
+
+JavaScript doesn’t allow class constructors to be async. We have to do any async actions outside of a constructor. Static class methods can help with this.
+
+```js
+class User {
+  static async init(userId) {
+    const user = await getUser(userId);
+    return new User(user);
+  }
+  constructor(user) {
+    this.id = user.id;
+    this.name = user.name;
+    this.email = user.email;
+  }
+}
+
+const me = await User.init(1)
+```
+
+<br />
+<hr />
+
 #### Issue 320 - Spot the Bug
 
 ```js
