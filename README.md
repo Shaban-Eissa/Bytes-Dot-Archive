@@ -2303,6 +2303,66 @@ async function completeCheckout(orderId) {
 ```
 
 
+<br />
+<hr />
+
+#### Issue 320 - Spot the Bug
+
+```js
+const userIds = [1, 2, 3];
+
+async function fetchUsers() {
+  userIds.forEach(async (id) => {
+    try {
+      const user = await fetchUserById(id);
+      console.log(`Fetched user: ${user.name}`);
+    } catch (error) {
+      console.error(`Failed to fetch user with ID ${id}:`, error);
+    }
+  });
+}
+
+async function fetchUserById(id) {
+  return new Promise((resolve) => {
+    let delay = Math.random() * 1000 + 1000;
+    setTimeout(() => {
+      resolve({ id, name: `User${id}` });
+    }, delay);
+  });
+}
+
+fetchUsers();
+```
+
+#### Pop Quiz: Answer
+
+The forEach loop is synchronous, meaning it doesn’t wait for the inner async function to complete. This results in the data potentially being out of order when logged to the console. To fix this, you can use a for...of loop with await:
+
+```js
+const userIds = [1, 2, 3];
+
+async function fetchUsers() {
+  for (const id of userIds) {
+    try {
+      const user = await fetchUserById(id);
+      console.log(`Fetched user: ${user.name}`);
+    } catch (error) {
+      console.error(`Failed to fetch user with ID ${id}:`, error);
+    }
+  }
+}
+
+async function fetchUserById(id) {
+  return new Promise((resolve) => {
+    let delay = Math.random() * 1000 + 1000;
+    setTimeout(() => {
+      resolve({ id, name: `User${id}` });
+    }, delay);
+  });
+}
+
+fetchUsers();
+```
 
 <br />
 <hr />
