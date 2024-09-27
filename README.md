@@ -2428,3 +2428,135 @@ The answer is 10. Here’s how it works.
 For clarity, we can refactor i += x() to be i = i + x(). From there, the interpreter begins evaluating our code. Before it evaluates the function invocation, it seems that i evaluates to 0, so now our code is i = 0 + x(). The invocation of x returns 10, so now it’s i = 0 + 10, which gives us i = 10.
 
 Note that if you swap the order of i and x() like i = x() + i you get a different value.
+
+<br />
+<hr />
+
+#### Issue 324 - Spot the Bug
+
+What gets logged?
+
+```js
+class BankAccount {
+  constructor(initialBalance) {
+    this.balance = initialBalance;
+    this.minimumBalance = 20.00;
+  }
+
+  deposit(amount) {
+    this.balance += amount;
+  }
+
+  withdraw(amount) {
+    if (this.balance - amount <= this.minimumBalance) {
+      return false;
+    } else {
+      this.balance -= amount;
+      return true;
+    }
+  }
+
+  getBalance() {
+    return this.balance;
+  }
+}
+
+const myAccount = new BankAccount(150.00);
+myAccount.deposit(0.10);
+myAccount.deposit(0.20);
+
+myAccount.withdraw(130.30);
+console.log(myAccount.getBalance());
+
+```
+
+#### Answer
+
+We would expect to see 20.00, but due to floating point arithmetic in JavaScript, we get an unexpected result. To fix this issue, we can represent money as integers (e.g., cents) and use Math.round to avoid the pitfalls of floating-point calculations. Here is the updated code:
+
+```js
+class BankAccount {
+  constructor(initialBalance) {
+    this.balanceCents = Math.round(initialBalance * 100);
+    this.minimumBalanceCents = 2000;
+  }
+
+  deposit(amount) {
+    this.balanceCents += Math.round(amount * 100);
+  }
+
+  withdraw(amount) {
+    const withdrawalCents = Math.round(amount * 100);
+
+    if (
+      Math.round(this.balanceCents - withdrawalCents) < this.minimumBalanceCents
+    ) {
+      return false;
+    } else {
+      this.balanceCents -= withdrawalCents;
+      return true;
+    }
+  }
+
+  getBalance() {
+    return this.balanceCents / 100;
+  }
+}
+
+const myAccount = new BankAccount(150.0);
+myAccount.deposit(0.1);
+myAccount.deposit(0.2);
+myAccount.withdraw(130.3);
+
+// Displaying the remaining balance, should be 20.00
+console.log(myAccount.getBalance());
+```
+
+<br />
+<hr />
+
+#### Issue 325 - Pop Quiz
+
+What does this evaluate to?
+
+```js
+Array.from({ length: 26 }, (x, i) => (i + 10).toString(36)).join(", ")
+```
+
+#### Answer
+The English alphabet as a string – 
+
+a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z
+
+
+<br />
+<hr />
+
+#### Issue 326 - Pop Quiz
+
+What gets logged?
+
+```js
+const array = new Array(3).fill([])
+array[0].push("bytes")
+console.log(array)
+```
+
+#### Answer
+
+The key to understanding this one is in knowing that arrays in JavaScript are reference values.
+
+When you call .fill([]), what you’re really doing is “filling up” the array with three references to the same array. You can kind of think of it like this.
+```js
+const reference = []
+const array = new Array(3).fill(reference)
+```
+
+Where now, array has three elements and they’re all referencing the same reference array. Therefore, if you add an item to any of the three elements, since they all point to the same array, it’s as if you’re adding an item to all of them.
+
+To get the same functionality without the referential weirdness, you can use Array.from.
+
+```js
+const array = Array.from({ length: 3 }, () => []);
+array[0].push("bytes");  // [ ["bytes"], [], [] ]
+```
