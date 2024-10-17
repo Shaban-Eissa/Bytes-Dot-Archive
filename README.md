@@ -2302,9 +2302,93 @@ async function completeCheckout(orderId) {
 }
 ```
 
+<br />
+<hr />
+
+#### Issue 314 - Spot the Bug
+
+```js
+function flattenArray(arr) {
+  let result = [];
+  arr.forEach((item) => {
+    if (Array.isArray(item)) {
+      result.concat(flattenArray(item));
+    } else {
+      result.push(item);
+    }
+  });
+  return result;
+}
+
+console.log(flattenArray([1, [2, [3, [4]]]]));
+```
+
+#### Spot the Bug: Solution
+
+Array.prototype.concat() doesn’t mutate the original array, it returns a new array. To fix the issue, we need to assign the return value of result.concat(flattenArray(item)) back to result.
+
+```js
+function flattenArray(arr) {
+  let result = [];
+  arr.forEach((item) => {
+    if (Array.isArray(item)) {
+      result = result.concat(flattenArray(item));
+    } else {
+      result.push(item);
+    }
+  });
+  return result;
+}
+
+console.log(flattenArray([1, [2, [3, [4]]]]));
+```
 
 <br />
 <hr />
+
+
+#### Issue 315 - Spot the Bug
+
+```js
+const newsletter = "Bytes"
+const tagline = "Your weekly dose of JavaScript"
+
+[newsletter, tagline].forEach((el) => console.log(el))
+```
+
+#### Spot the Bug: Solution
+You might be surprised to learn that this code doesn’t execute. If you try, you’ll get an error – Uncaught ReferenceError: tagline is not defined. But clearly it is, right? Wrongo.
+
+This is the very rare scenario where not using semicolons can bite you. Because we have a string followed by no semicolon followed by an opening array bracket, JavaScript interprets our code like this, as if we’re trying to access elements from the string.
+
+```js
+"Your weekly dose of JavaScript"[newsletter, tagline].forEach();
+```
+
+This, of course, throws an error because tagline isn’t defined. To fix this, add a + sign before the array.
+
+```js
+const newsletter = "Bytes"
+const tagline = "Your weekly dose of JavaScript"
+
++[newsletter, tagline].forEach((el) => console.log(el))
+```
+
+That’s mostly a joke, but it does work…
+
+Instead, just use semicolons.
+
+```js
+const newsletter = "Bytes";
+const tagline = "Your weekly dose of JavaScript";
+
+[newsletter, tagline].forEach((el) => console.log(el));
+```
+
+
+<br />
+<hr />
+
 
 #### Issue 319 - Spot the Bug
 
@@ -2560,3 +2644,127 @@ To get the same functionality without the referential weirdness, you can use Arr
 const array = Array.from({ length: 3 }, () => []);
 array[0].push("bytes");  // [ ["bytes"], [], [] ]
 ```
+
+
+<br />
+<hr />
+
+#### Issue 328 - Spot the Bug
+
+```js
+const products = [
+  { name: 'Grapes', price: 2 },
+  { name: 'Banana', price: 1 },
+  { name: 'Apple', price: 3 },
+  { name: 'Cherry', price: 2 },
+  { name: 'Date', price: 1 }
+];
+
+products.sort((a, b) => a.price > b.price);
+```
+
+#### Answer
+
+When using the Array.sort method, the compare function should return a number, not a boolean. Returning a negative number will sort the first item before the second, a positive number will sort the second item before the first, and returning 0 will leave the items in the same order.
+
+```js
+const products = [
+  { name: 'Grapes', price: 2 },
+  { name: 'Banana', price: 1 },
+  { name: 'Apple', price: 3 },
+  { name: 'Cherry', price: 2 },
+  { name: 'Date', price: 1 }
+];
+
+products.sort((a, b) => a.price - b.price);
+```
+
+
+<br />
+<hr />
+
+#### Issue 329 - Spot the Bug
+
+```js
+const fetchPokemon = async (id) => {
+  const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
+  if (!response.ok) {
+    throw new Error(`Network response was not ok: ${response.statusText}`);
+  }
+  const data = await response.json();
+  return data;
+};
+
+const getStarterPokemon = () => {
+  const ids = [1, 2, 3]
+  const pokemon = [];
+
+  ids.forEach(async (id) => {
+    const result = await fetchPokemon(id);
+    pokemon.push(result);
+  });
+
+  return pokemon
+}
+
+getStarterPokemon()
+```
+
+#### Answer
+
+await-ing inside of a forEach will only end in pain. There are a few different ways to fix this, but here’s one using a for of loop.
+
+```js
+const fetchPokemon = async (id) => {
+  const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
+  if (!response.ok) {
+    throw new Error(`Network response was not ok: ${response.statusText}`);
+  }
+  const data = await response.json();
+  return data;
+};
+
+const getStarterPokemon = async () => {
+  const ids = [1, 2, 3]
+  const pokemon = [];
+
+  for (const id of ids) {
+    const result = await fetchPokemon(id);
+    pokemon.push(result);
+  }
+
+  return pokemon
+}
+
+await getStarterPokemon()
+```
+
+
+<br />
+<hr />
+
+#### Issue 331 - Spot the Bug
+
+What gets logged?
+
+```js
+for (var i = 0; i < 5; i++) {
+  setTimeout(() => console.log(i), 1000)
+}
+```
+
+#### Answer
+
+A little throw back for all you old heads. This used to be everyone’s favorite JavaScript interview question.
+
+This code will log 5 5 times.
+
+The reason for this is because we declared our variable with var, which is function scoped. By the time our functions given to setTimeout run, i will already be 5 and every function will reference that same variable. To fix this, use let which is block scoped and will give each iteration of our for loop its own i.
+
+```js
+for (let i = 0; i < 5; i++) {
+  setTimeout(() => console.log(i), 1000)
+}
+```
+
+
