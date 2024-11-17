@@ -2767,4 +2767,474 @@ for (let i = 0; i < 5; i++) {
 }
 ```
 
+<br />
+<hr />
 
+#### Issue 333 - Spot the Bug
+
+What gets logged?
+
+```js
+function logPropertyUpdates(target) {
+  return new Proxy(target, {
+    set(target, property, value, receiver) {
+      console.log(`Property "${property}" changed to "${value}"`);
+      return Reflect.set(target, property, value, receiver);
+    },
+  });
+}
+
+const user = logPropertyUpdates({
+  name: "Lew",
+  details: {
+    age: 24,
+    country: "USA",
+  },
+});
+
+user.name = "Kareem";
+user.details.age = 25;
+```
+
+#### Answer
+ES6 Proxies are not recursive by default. In the above example, the user object is wrapped in a Proxy, but the details property is not. Therefore, when the user.details.age property is updated, the Proxy is not triggered.
+
+To fix this, we can make the Proxy recursive:
+```js
+function logPropertyUpdates(target) {
+  if (typeof target === "object" && target !== null) {
+    return new Proxy(target, {
+      get(target, property, receiver) {
+        const value = Reflect.get(target, property, receiver);
+        return logPropertyUpdates(value);
+      },
+      set(target, property, value, receiver) {
+        console.log(`Property "${property}" changed to "${value}"`);
+        return Reflect.set(target, property, value, receiver);
+      },
+    });
+  }
+  return target;
+}
+
+const user = logPropertyUpdates({
+  name: "Lew",
+  details: {
+    age: 24,
+    country: "USA",
+  },
+});
+
+user.name = "Kareem";
+user.details.age = 25;
+
+```
+
+<br />
+<hr />
+
+#### Issue 334 - Spot the Bug
+
+```js
+const products = {
+  SKU12345: { name: "Laptop", price: 999, discount: 0.1 },
+  SKU67890: { name: "Phone", price: 499, discount: 0 },
+  SKU54321: { name: "Tablet", price: 299, discount: 0.05 },
+};
+
+function printFormattedProductDetails(products) {
+  for (const product in products) {
+    const { name, price, discount } = product;
+
+    let finalPrice = price;
+    if (discount) {
+      finalPrice = price - price * discount;
+    }
+
+    console.log(
+      `Product: ${name}, Price: ${finalPrice.toLocaleString("en-US", {
+        style: "currency",
+        currency: "USD",
+      })}`
+    );
+  }
+}
+
+printFormattedProductDetails(products);
+```
+
+#### Answer
+The for ... in loop iterates over the keys of the object, not the values. This results in name, price and discount being undefined. To fix this, we need to access the value of the key in the object.
+
+```js
+const products = {
+  SKU12345: { name: "Laptop", price: 999, discount: 0.1 },
+  SKU67890: { name: "Phone", price: 499, discount: 0 },
+  SKU54321: { name: "Tablet", price: 299, discount: 0.05 },
+};
+
+function printFormattedProductDetails(products) {
+  for (const product in products) {
+    const { name, price, discount } = products[product];
+
+    let finalPrice = price;
+    if (discount) {
+      finalPrice = price - price * discount;
+    }
+
+    console.log(
+      `Product: ${name}, Price: ${finalPrice.toLocaleString("en-US", {
+        style: "currency",
+        currency: "USD",
+      })}`
+    );
+  }
+}
+
+printFormattedProductDetails(products);
+```
+
+<br />
+<hr />
+
+#### Issue 335 - Spot the Bug
+
+```js
+function processUserData(userId, options = {}) {
+  "use strict";
+  let processedData = `User ID: ${userId}\n`;
+
+  if (options.includeEmail) {
+    processedData += "Email: user@example.com\n";
+  }
+
+  if (options.includeAge) {
+    processedData += "Age: 25\n";
+  }
+
+  if (options.verbose) {
+    processedData += "Processing mode: Verbose\n";
+  }
+
+  return processedData;
+}
+
+const userData = processUserData(12345, { includeEmail: true, verbose: true });
+```
+
+#### Answer
+From MDN - “The ‘use strict’ directive can only be applied to the body of functions with simple parameters. Using “use strict” in functions with rest, default, or destructured parameters is a syntax error.”
+
+There are a few ways to fix this. We can move the "use strict" directive to the top of the file, or we can remove the default parameter from the function signature, but if we wanted to keep both the default parameter and the "use strict" directive, we can go old school and check if the options parameter is undefined and set it to an empty object.
+
+```js
+function processUserData(userId, options) {
+  "use strict";
+  if (typeof options !== "object" || options === null) {
+    options = {};
+  }
+  let processedData = `User ID: ${userId}\n`;
+
+  if (options.includeEmail) {
+    processedData += "Email: user@example.com\n";
+  }
+
+  if (options.includeAge) {
+    processedData += "Age: 25\n";
+  }
+
+  if (options.verbose) {
+    processedData += "Processing mode: Verbose\n";
+  }
+
+  return processedData;
+}
+
+const userData = processUserData(12345, { includeEmail: true, verbose: true });
+```
+
+
+<br />
+<hr />
+
+#### Issue 336 - Spot the Bug
+
+```js
+let x = 5
+let y = 10
+[x, y] = [y, x]
+```
+
+#### Answer
+If you run this code you get a “ReferenceError: y is not defined” error. This is because the JavaScript engine does not automatically insert a semicolon after 10 because the subsequent line can be parsed as a continuation of the expression. Meaning, JavaScript interprets the code like this:
+
+```js
+let x = 5;
+let y = 10[x, y] = [y, x];
+```
+
+To fix the issue, we can update our code to use semicolons or wrap the expression in parentheses:
+
+```js
+let x = 5;
+let y = 10;
+([x, y] = [y, x]);
+```
+
+<br />
+<hr />
+
+#### Issue 337 - Pop Quiz
+How would you remove the duplicate elements from this array?
+
+```js
+const list = [
+  { name: 'John' }, 
+  { name: 'Sara' },
+  { name: 'Sara' },
+  { name: 'Lynn' },
+  { name: 'Jake' }
+];
+```
+
+#### Answer
+There are a few ways to do this. Your first intuition might be to do something like this.
+
+```js
+const uniqueList = Array.from(new Set(list))
+```
+It’s the right idea since creating a Set will ensure our collection only contains unique values and Array.from allows us to create a new, shallow-copied array. Unfortunately, Sets only enforce uniqueness for primitive values, but our list is full of objects.
+
+Instead, we can do something like this.
+
+```js
+const map = new Map();
+
+list.forEach(item => {
+	map.set(item.name, item)
+});
+
+const uniqueList = Array.from(map.values())
+```
+
+Notice we’re using a Map here. Since Map’s preserve insertion order, our uniqueList will have the same order as the original list, but without the duplicates since we’re using name as the key.
+
+Another fancy approach is using filter with findIndex,
+
+```js
+const uniqueList = list.filter((item, index) => 
+  list.findIndex(({name}) => 
+    name === item.name
+  ) === index
+);
+```
+
+Or using .reduce and .map,
+
+```js
+const uniqueList = Object.keys(
+  list.reduce((acc, cur) => {
+    acc[cur.name] = cur.name;
+    return acc;
+  }, {}),
+).map((name) => ({ name }));
+```
+
+
+<br />
+<hr />
+
+#### Issue 338 - Pop Quiz
+
+```js
+function calculateTotalCost(mealCost, taxRate = 0.1, tip = 0) {
+  arguments[1] = 0.15;
+  arguments[2] = arguments[2] + 5;
+
+  let totalCost = mealCost + mealCost * taxRate + tip;
+  return totalCost;
+}
+
+let total = calculateTotalCost(50, undefined, 10);
+console.log(total);
+```
+
+#### Answer
+The answer is 65. MDN explains “Non-strict functions that are passed rest, default, or destructured parameters will not sync new values assigned to parameters in the function body with the arguments object.”
+
+If we remove the default parameters we get a different answer:
+```js
+function calculateTotalCost(mealCost, taxRate, tip) {
+  arguments[1] = 0.15;
+  arguments[2] = arguments[2] + 5;
+
+  let totalCost = mealCost + mealCost * taxRate + tip;
+  return totalCost;
+}
+
+let total = calculateTotalCost(50, undefined, 10);
+console.log(total);
+```
+The answer with no default params is 72.5 (50 + 7.5 + 15).
+
+
+<br />
+<hr />
+
+#### Issue 339 - Spot the Bug
+
+```js
+function sumArgs() {
+  let sum = 0;
+
+  arguments.forEach((arg) => {
+    sum += arg;
+  });
+
+  return sum;
+}
+
+const result = sumArgs(1, 2, 3, 4, 5);
+```
+
+#### Answer
+In JavaScript, arguments is not an array, it is an “array-like object”. Because it’s an iterable, you can use a for loop to iterate over it, but if you want to use array methods like forEach, you need to convert it to an array first. There are a few different ways to do this.
+
+```js
+function sumArgs() {
+  let sum = 0;
+
+  for (let i = 0; i < arguments.length; i++) {
+    sum += arguments[i];
+  }
+
+  return sum;
+}
+
+const result = sumArgs(1, 2, 3, 4, 5);
+```
+
+Or you can use the rest operator to get the arguments as an array:
+```js
+function sumArgs(...args) {
+  let sum = 0;
+
+  args.forEach((arg) => {
+    sum += arg;
+  });
+
+  return sum;
+}
+
+const result = sumArgs(1, 2, 3, 4, 5);
+```
+
+Or you can use Array.from to convert the arguments to an array:
+
+```js
+function sumArgs() {
+  let sum = 0;
+
+  Array.from(arguments).forEach((arg) => {
+    sum += arg;
+  });
+
+  return sum;
+}
+
+const result = sumArgs(1, 2, 3, 4, 5);
+```
+
+<br />
+<hr />
+
+#### Issue 340 - Spot the Bug
+
+```js
+function* userGenerator(users) {
+  for (let user of users) {
+    if (!user.isActive) {
+      return;
+    }
+    yield user;
+  }
+}
+
+const users = [
+  { name: "Ben", isActive: true },
+  { name: "Alex", isActive: false },
+  { name: "Tyler", isActive: true },
+];
+
+const gen = userGenerator(users);
+
+for (let user of gen) {
+  console.log(user);
+}
+```
+
+#### Answer
+return will stop the generator, so the second user will not be yielded which causes only the user object for Ben to be logged (instead of both Ben and Tyler). To fix this, use continue instead of return.
+
+```js
+function* userGenerator(users) {
+  for (let user of users) {
+    if (!user.isActive) {
+      continue;
+    }
+    yield user;
+  }
+}
+
+const users = [
+  { name: "Ben", isActive: true },
+  { name: "Alex", isActive: false },
+  { name: "Tyler", isActive: true },
+];
+
+const gen = userGenerator(users);
+
+for (let user of gen) {
+  console.log(user);
+}
+```
+
+
+<br />
+<hr />
+
+#### Issue 341 - Pop Quiz
+What does this function do?
+
+```js
+const surprise = (...fns) => input => fns.reduce(
+  (acc, fn) => fn(acc), input
+)
+```
+
+#### Answer
+It’s a pipe function that allows you to chain multiple operations together by taking a series of functions as arguments and applying them in a specific order to the input.
+
+Wow, words.
+
+Instead of doing something like this.
+
+```js
+const toUpperCase = str => str.toUpperCase()
+const removeSpaces = str => str.replace(/\s/g, "")
+const addExclamation = str => str + "!"
+
+toUpperCase(removeSpaces(addExclamation("Subscribe to Bytes")))
+```
+
+You can do something like this.
+
+```js
+const pipe = (...fns) => input => fns.reduce(
+  (acc, fn) => fn(acc), input
+)
+
+const formatString = pipe(toUpperCase, removeSpaces, addExclamation)
+
+formatString("Subscribe to Bytes") // SUBSCRIBETOBYTES!
+```
