@@ -3238,3 +3238,379 @@ const formatString = pipe(toUpperCase, removeSpaces, addExclamation)
 
 formatString("Subscribe to Bytes") // SUBSCRIBETOBYTES!
 ```
+
+<br />
+<hr />
+
+#### Issue 347 - Pop Quiz
+In the code snippet below, what do a and b evaluate to?
+
+```js
+let a = 0;
+const b = [1, 2, 3, 4, 5].map((x) => (
+  (a += x), x * x
+));
+
+console.log(a) // ?
+console.log(b) // ?
+```
+
+#### Pop Quiz: Answer
+Here’s the code with more descriptive variable names.
+
+```js
+let sum = 0;
+const squares = [1, 2, 3, 4, 5].map((x) => (
+  (sum += x), x * x
+));
+
+console.log(sum) // 15
+console.log(squares) // [1, 4, 9, 16, 25]
+```
+This is a fun one. The weirdest part is probably the comma , operator.
+
+If you’re not familiar, , evaluates each of its operands (from left to right) and returns the value of the last operand. This allows us to, in a single line, increase sum by x and return the square of x. When finished, we get the sum of the array as well as a new array of squares.
+
+<br />
+<hr />
+
+#### Issue 350 - Spot the Bug
+
+```js
+class Person {
+  constructor(name, age) {
+    this.name = name;
+    this.age = age;
+  }
+
+  set name (value) {
+    this.name = value;
+  }
+
+  set age (value) {
+    this.age = value;
+  }
+
+  printName() {
+    console.log(this.name);
+  }
+
+  printAge() {
+    console.log(this.age);
+  }
+}
+```
+
+#### Spot the Bug: Solution
+When the class assigns the name and age properties, it calls the setters, which in turn call themselves. This creates an infinite loop and will throw a “Maximum call stack size exceeded” error. To fix this, you should use different names for the properties and the setters.
+
+```js
+class Person {
+  constructor(name, age) {
+    this._name = name;
+    this._age = age;
+  }
+
+  set name (value) {
+    this._name = value;
+  }
+
+  set age (value) {
+    this._age = value;
+  }
+
+  get name() {
+    return this._name;
+  }
+
+  get age() {
+    return this._age;
+  }
+
+  printName() {
+    console.log(this._name);
+  }
+
+  printAge() {
+    console.log(this._age);
+  }
+}
+```
+
+<br />
+<hr />
+
+#### Issue 352 - Spot the Bug
+
+```js
+const mockAPIData = {
+  items: [
+    { id: 1, price: 100 },
+    { id: 2, price: 200 }
+  ]
+};
+
+class DataCache {
+  constructor() {
+    this.cache = new Map();
+  }
+
+  getData(key) {
+    if (!this.cache.has(key)) {
+      this.cache.set(key, mockAPIData);
+    }
+    return this.cache.get(key);
+  }
+
+  calculateTotal(data) {
+    data.items.forEach(item => {
+      item.price = item.price * 1.2;
+    });
+    return data;
+  }
+}
+
+const cache = new DataCache();
+const data = cache.getData('products');
+const withTax = cache.calculateTotal(data);
+console.log('Before tax calculation:', data.items[0].price);
+console.log('With tax:', withTax.items[0].price);
+```
+
+
+#### Spot the Bug: Solution
+The calculateTotal method mutates the reference to the original data. This means that the original data is modified in place, which can lead to unexpected behavior. To fix this, you should create a new object in the calculateTotal method and return that instead of modifying the original data. Here’s the corrected code:
+
+```js
+const mockAPIData = {
+  items: [
+    { id: 1, price: 100 },
+    { id: 2, price: 200 }
+  ]
+};
+
+class DataCache {
+  constructor() {
+    this.cache = new Map();
+  }
+
+  getData(key) {
+    if (!this.cache.has(key)) {
+      this.cache.set(key, mockAPIData);
+    }
+    return this.cache.get(key);
+  }
+
+  calculateTotal(data) {
+    const newData = {
+      items: data.items.map(item => ({
+        ...item,
+        price: item.price * 1.2
+      }))
+    };
+    return newData;
+  }
+}
+
+const cache = new DataCache();
+const data = cache.getData('products');
+const withTax = cache.calculateTotal(data);
+console.log('Before tax calculation:', data.items[0].price);
+console.log('With tax:', withTax.items[0].price);
+```
+
+<br />
+<hr />
+
+#### Issue 353 - Spot the Bug
+
+```js
+function safeUpdate(obj, key, value) {
+  if (!obj.hasOwnProperty(key)) {
+    obj.key = value;
+  }
+}
+
+const user = {
+  name: "Alice",
+  age: 30
+};
+
+safeUpdate(user, "country", "USA");
+```
+
+
+#### Spot the Bug: Solution
+This one was for the beginners.
+
+```js
+function safeUpdate(obj, key, value) {
+  if (!obj.hasOwnProperty(key)) {
+    obj.key = value;
+  }
+}
+```
+Our bug is that we’re adding a literal key property to our object.
+
+```js
+console.log(user.key) // "USA"
+```
+
+In JavaScript, if you want to use a variable as the key of an object, you need to use bracket notation instead of dot notation.
+
+```js
+function safeUpdate(obj, key, value) {
+  if (!obj.hasOwnProperty(key)) {
+    obj[key] = value;
+  }
+}
+```
+
+
+<br />
+<hr />
+
+#### Issue 356 - Spot the Bug
+
+```js
+function decodeBinaryCommands(binaryStrings) {
+  const commands = [];
+
+  for (let binStr of binaryStrings) {
+    const command = parseInt(binStr, 10);
+
+    switch (command) {
+      case 1:
+        commands.push("Start");
+        break;
+      case 2:
+        commands.push("Stop");
+        break;
+      case 3:
+        commands.push("Pause");
+        break;
+      case 4:
+        commands.push("Resume");
+        break;
+      default:
+        commands.push("Unknown");
+        break;
+    }
+  }
+
+  return commands;
+}
+
+const binaryCommands = ["0001", "0010", "0100", "0011", "1100"];
+const decodedCommands = decodeBinaryCommands(binaryCommands);
+console.log(decodedCommands);
+```
+
+
+#### Spot the Bug: Solution
+If we run this code, we get an output of ['Start', 'Unknown', 'Unknown', 'Unknown', 'Unknown']. This is because the parseInt function has the wrong radix. In this case, we want to use a radix of 2 to convert the binary string to a decimal number.
+
+```js
+function decodeBinaryCommands(binaryStrings) {
+  const commands = [];
+
+  for (let binStr of binaryStrings) {
+    const command = parseInt(binStr, 2);
+
+    switch (command) {
+      case 1:
+        commands.push("Start");
+        break;
+      case 2:
+        commands.push("Stop");
+        break;
+      case 3:
+        commands.push("Pause");
+        break;
+      case 4:
+        commands.push("Resume");
+        break;
+      default:
+        commands.push("Unknown");
+        break;
+    }
+  }
+
+  return commands;
+}
+
+const binaryCommands = ["0001", "0010", "0100", "0011", "1100"];
+const decodedCommands = decodeBinaryCommands(binaryCommands);
+console.log(decodedCommands);
+```
+
+<br />
+<hr />
+
+#### Issue 357 - Spot the Bug
+
+```js
+function reverseString(str) {
+  return str.split("").reverse().join("");
+}
+
+let reversedString = reverseString("Hello, 👋!");
+console.log(reversedString);
+```
+
+
+#### Spot the Bug: Solution
+This bug occurs because the split method treats the string as an array of 16-bit units, not as an array of characters resulting the unexpected output: !�� ,olleH. By using Array.from(str) or [...str] the string is split into an array of actual characters, respecting the surrogate pairs.
+
+Using Array.from:
+
+```js
+function reverseString(str) {
+  return Array.from(str).reverse().join("");
+}
+
+let reversedString = reverseString("Hello, 👋!");
+console.log(reversedString);
+```
+Using the spread operator:
+
+```js
+function reverseString(str) {
+  return [...str].reverse().join("");
+}
+
+let reversedString = reverseString("Hello, 👋!");
+console.log(reversedString);
+```
+
+<br />
+<hr />
+
+#### Issue 359 - Spot the Bug
+
+```js
+function deepCopy(obj) {
+  return JSON.parse(JSON.stringify(obj));
+}
+
+const user = {
+  name: 'Tyler',
+  age: 32,
+  created: new Date(),
+}
+
+const copiedUser = deepCopy(user)
+```
+
+
+#### Spot the Bug: Solution
+A deep copy of an object is a copy whose properties do not share the same references as those of the source object from which the copy was made. One approach for deep copying in JavaScript is using JSON.stringify and JSON.parse.
+
+This kind of works in our case, but it will convert created to a string. To prevent that, you can use window.structuredClone instead (assuming browser support).
+
+```js
+function deepCopy(obj) {
+  return window.structuredClone(obj)
+}
+```
+
